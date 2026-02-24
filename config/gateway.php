@@ -1,0 +1,62 @@
+<?php
+
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Gateway Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the API gateway service
+    |
+    */
+
+    // Gateway name for identification
+    'name' => env('GATEWAY_NAME', 'MLGateway'),
+
+    // Origin API URL to proxy requests to
+    'origin_url' => env('ORIGIN_API_URL', 'https://dream-api.sendto.you/api'),
+
+    // Request timeout in seconds
+    'timeout' => (int) env('ORIGIN_API_TIMEOUT', 120),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rate Limiting Configuration
+    |--------------------------------------------------------------------------
+    */
+
+    'rate_limit' => [
+        // General API rate limit (requests per minute)
+        'per_minute' => (int) env('RATE_LIMIT_PER_MINUTE', 60),
+
+        // Upload endpoint rate limit (requests per minute)
+        'upload_per_minute' => (int) env('RATE_LIMIT_UPLOAD_PER_MINUTE', 10),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Routes Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Define which routes should be proxied and which should be handled locally
+    |
+    */
+
+    'routes' => [
+        // Routes to handle locally (not proxied)
+        'local' => [
+            'auth/send-code',
+        ],
+
+        // Routes to return 404 (not available through gateway)
+        'blocked' => [
+            'admin',
+            'admin/*',
+        ],
+
+        // Routes that require special handling (file uploads)
+        'uploads' => [
+            'upload/image',
+        ],
+    ],
+];
