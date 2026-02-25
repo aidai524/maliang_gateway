@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ApiKeyAndIpAuth;
 use App\Http\Middleware\GatewayLogger;
 use App\Http\Middleware\GatewayRateLimiter;
 use Illuminate\Foundation\Application;
@@ -32,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'gateway.logger' => GatewayLogger::class,
             'gateway.ratelimit' => GatewayRateLimiter::class,
+            'gateway.auth' => ApiKeyAndIpAuth::class,
         ]);
         
         // Trust all proxies (since we're a gateway)

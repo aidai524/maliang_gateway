@@ -59,4 +59,24 @@ return [
             'upload/image',
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Authentication Configuration
+    |--------------------------------------------------------------------------
+    |
+    | API Key and IP whitelist for protected endpoints
+    |
+    */
+
+    'auth' => [
+        // API Keys for authentication (comma-separated or array)
+        // Leave empty to disable API key check
+        'api_keys' => env('GATEWAY_API_KEYS', ''),
+
+        // IP whitelist for protected endpoints (comma-separated or array)
+        // Supports: single IP (192.168.1.1), CIDR (192.168.1.0/24), wildcard (192.168.1.*)
+        // Leave empty to allow all IPs (when API key is valid)
+        'ip_whitelist' => env('GATEWAY_IP_WHITELIST', ''),
+    ],
 ];

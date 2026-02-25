@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2",
         "alibabacloud/dysmsapi-20170525": "^4.5",
+        "alibabacloud/tea-utils": "*",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1"
     },

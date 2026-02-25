@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Route;
 
 // SMS verification code - handled locally via Aliyun SMS
 Route::post('auth/send-code', [AuthController::class, 'sendCode'])
-    ->middleware('gateway.ratelimit:sms')
+    ->middleware(['gateway.auth', 'gateway.ratelimit:sms'])
     ->name('auth.send-code');
 
 /*
