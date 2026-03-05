@@ -245,6 +245,178 @@ tail -f /var/log/nginx/maliang_gateway_error.log
 1. Clear Redis cache: `redis-cli FLUSHDB`
 2. Check rate limit headers in response
 
+## 宝塔面板部署注意事项
+
+如果使用宝塔面板管理的服务器,需要注意以下差异:
+
+### 服务管理命令差异
+
+宝塔面板管理的服务使用 init.d 脚本,而非 systemd:
+
+```bash
+# Nginx 服务管理
+/etc/init.d/nginx start      # 启动
+/etc/init.d/nginx stop       # 停止
+/etc/init.d/nginx restart    # 重启
+/etc/init.d/nginx status     # 查看状态
+
+# PHP-FPM 服务管理 (PHP 8.3)
+/etc/init.d/php-fpm-83 start      # 启动
+/etc/init.d/php-fpm-83 stop       # 停止
+/etc/init.d/php-fpm-83 restart    # 重启
+/etc/init.d/php-fpm-83 status     # 查看状态
+```
+
+**重要**: 不要使用 `systemctl start nginx`,这会导致配置文件冲突。
+
+### 开机自启设置
+
+宝塔服务开机自启:
+
+```bash
+# 设置 Nginx 开机自启
+update-rc.d nginx defaults
+
+# 验证开机自启
+ls -la /etc/rc*.d/*nginx
+```
+
+### 配置文件路径
+
+宝塔面板的配置文件路径:
+
+```
+Nginx 主配置:     /www/server/nginx/conf/nginx.conf
+站点配置:         /www/server/panel/vhost/nginx/*.conf
+SSL 证书:         /www/server/panel/vhost/ssl/
+日志目录:         /www/wwwlogs/
+```
+
+### 快速启动检查清单
+
+服务器重启后的启动流程:
+
+```bash
+# 1. 检查 Nginx 状态
+/etc/init.d/nginx status
+
+# 如果未运行,启动 Nginx
+/etc/init.d/nginx start
+
+# 2. 检查 PHP-FPM 状态
+/etc/init.d/php-fpm-83 status
+
+# 如果未运行,启动 PHP-FPM
+/etc/init.d/php-fpm-83 start
+
+# 3. 验证 API 服务
+curl https://dream-api.newpai.cn/health
+
+# 预期返回:
+# {"status":"ok","gateway":"MLGateway","timestamp":"...","origin":"https://dream-api.sendto.you"}
+```
+
+### 常见问题
+
+#### 问题 1: systemctl 启动 Nginx 失败
+
+**错误信息**:
+```
+Job for nginx.service failed because the control process exited with error code.
+unknown directive "stream" in /etc/nginx/nginx.conf
+```
+
+**原因**: systemctl 使用的 `/etc/nginx/nginx.conf` 与宝塔的 `/www/server/nginx/conf/nginx.conf` 冲突。
+
+**解决方案**: 使用宝塔的 init.d 脚本:
+```bash
+/etc/init.d/nginx start
+```
+
+#### 问题 2: 服务未开机自启
+
+**检查方法**:
+```bash
+# 检查服务是否开机自启
+systemctl is-enabled nginx
+```
+
+**解决方案**:
+```bash
+# 使用 update-rc.d 设置开机自启
+update-rc.d nginx defaults
+update-rc.d php-fpm-83 defaults
+```
+
+#### 问题 3: 域名无法访问
+
+**排查步骤**:
+```bash
+# 1. 检查 Nginx 是否运行
+ps aux | grep nginx
+
+# 2. 检查端口监听
+netstat -tlnp | grep -E ':80|:443'
+
+# 3. 测试本地访问
+curl -I http://127.0.0.1
+
+# 4. 检查防火墙
+# 宝塔面板: 安全 -> 防火墙 -> 确保 80 和 443 端口开放
+```
+
+### 宝塔面板配置建议
+
+1. **PHP 版本**: 确保 PHP 8.3 已安装并在网站设置中选择
+2. **网站目录**: 指向 `/www/wwwroot/maliang_gateway/public`
+3. **运行目录**: 设置为 `/public`
+4. **伪静态**: 选择 `laravel5`
+5. **SSL**: 在网站设置中配置 Let's Encrypt 证书
+
+### 一键启动脚本
+
+创建 `/www/wwwroot/maliang_gateway/start-services.sh`:
+
+```bash
+#!/bin/bash
+
+echo "=== 启动 MLGateway 服务 ==="
+
+# 启动 Nginx
+if ! /etc/init.d/nginx status > /dev/null 2>&1; then
+    echo "启动 Nginx..."
+    /etc/init.d/nginx start
+else
+    echo "Nginx 已运行"
+fi
+
+# 启动 PHP-FPM
+if ! /etc/init.d/php-fpm-83 status > /dev/null 2>&1; then
+    echo "启动 PHP-FPM..."
+    /etc/init.d/php-fpm-83 start
+else
+    echo "PHP-FPM 已运行"
+fi
+
+# 健康检查
+echo ""
+echo "=== 健康检查 ==="
+curl -s https://dream-api.newpai.cn/health | jq .
+
+echo ""
+echo "✅ 所有服务已启动"
+```
+
+赋予执行权限:
+```bash
+chmod +x /www/wwwroot/maliang_gateway/start-services.sh
+```
+
+使用:
+```bash
+./start-services.sh
+```
+
 ## Updates
 
 ```bash
