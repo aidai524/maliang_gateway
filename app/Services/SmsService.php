@@ -6,17 +6,22 @@ use AlibabaCloud\SDK\Dysmsapi\V20170525\Dysmsapi;
 use AlibabaCloud\SDK\Dysmsapi\V20170525\Models\SendSmsRequest;
 use AlibabaCloud\Tea\Utils\Utils\RuntimeOptions;
 use Darabonba\OpenApi\Models\Config;
+use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Exception;
 
 class SmsService
 {
     protected ?Dysmsapi $client = null;
+
     protected string $accessKeyId;
+
     protected string $accessKeySecret;
+
     protected string $signName;
+
     protected string $templateCode;
+
     protected string $regionId;
 
     public function __construct()
@@ -41,9 +46,9 @@ class SmsService
             'accessKeyId' => $this->accessKeyId,
             'accessKeySecret' => $this->accessKeySecret,
         ]);
-        
-        $config->endpoint = "dysmsapi.aliyuncs.com";
-        
+
+        $config->endpoint = 'dysmsapi.aliyuncs.com';
+
         return new Dysmsapi($config);
     }
 
@@ -53,7 +58,7 @@ class SmsService
     public function sendVerificationCode(string $phone): array
     {
         // Validate phone number format (Chinese mobile)
-        if (!preg_match('/^1[3-9]\d{9}$/', $phone)) {
+        if (! preg_match('/^1[3-9]\d{9}$/', $phone)) {
             return [
                 'success' => false,
                 'message' => 'Invalid phone number format',
@@ -80,7 +85,7 @@ class SmsService
         Cache::put($rateLimitKey, true, now()->addMinute());
 
         // If Aliyun client is not configured, return code directly (for development)
-        if (!$this->client) {
+        if (! $this->client) {
             Log::warning('Aliyun SMS client not configured, returning code directly', [
                 'phone' => $phone,
                 'code' => $code,
@@ -102,7 +107,7 @@ class SmsService
             ]);
 
             $runtimeOptions = new RuntimeOptions([]);
-            
+
             $response = $this->client->sendSmsWithOptions($sendSmsRequest, $runtimeOptions);
 
             Log::info('SMS sent successfully', [
@@ -115,6 +120,7 @@ class SmsService
                 return [
                     'success' => true,
                     'message' => 'Verification code sent successfully',
+                    'code' => $code,
                 ];
             }
 
@@ -150,7 +156,7 @@ class SmsService
         $codeKey = "sms_code:{$phone}";
         $storedCode = Cache::get($codeKey);
 
-        if (!$storedCode) {
+        if (! $storedCode) {
             return false;
         }
 
@@ -170,6 +176,7 @@ class SmsService
     public function hasValidCode(string $phone): bool
     {
         $codeKey = "sms_code:{$phone}";
+
         return Cache::has($codeKey);
     }
 }

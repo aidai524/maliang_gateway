@@ -17,11 +17,11 @@ class ApiKeyAndIpAuth
     {
         $path = $request->path();
 
-        if (!$this->isProtectedRoute($path)) {
+        if (! $this->isProtectedRoute($path)) {
             return $next($request);
         }
 
-        if (!$this->validateApiKey($request)) {
+        if (! $this->validateApiKey($request)) {
             return new JsonResponse([
                 'success' => false,
                 'error' => 'INVALID_API_KEY',
@@ -29,7 +29,7 @@ class ApiKeyAndIpAuth
             ], 401);
         }
 
-        if (!$this->validateIpAddress($request)) {
+        if (! $this->validateIpAddress($request)) {
             return new JsonResponse([
                 'success' => false,
                 'error' => 'IP_NOT_ALLOWED',
@@ -43,10 +43,11 @@ class ApiKeyAndIpAuth
     protected function isProtectedRoute(string $path): bool
     {
         foreach ($this->protectedRoutes as $route) {
-            if ($path === $route || str_starts_with($path, $route . '/')) {
+            if ($path === $route || str_starts_with($path, $route.'/')) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -125,7 +126,8 @@ class ApiKeyAndIpAuth
 
         if (str_contains($allowed, '*')) {
             $pattern = str_replace(['*', '.'], ['\d+', '\.'], $allowed);
-            return (bool) preg_match('/^' . $pattern . '$/', $clientIp);
+
+            return (bool) preg_match('/^'.$pattern.'$/', $clientIp);
         }
 
         return false;
@@ -152,7 +154,7 @@ class ApiKeyAndIpAuth
     protected function getValidApiKeys(): array
     {
         $keys = config('gateway.auth.api_keys', env('GATEWAY_API_KEYS', ''));
-        
+
         if (is_array($keys)) {
             return $keys;
         }
@@ -167,7 +169,7 @@ class ApiKeyAndIpAuth
     protected function getIpWhitelist(): array
     {
         $whitelist = config('gateway.auth.ip_whitelist', env('GATEWAY_IP_WHITELIST', ''));
-        
+
         if (is_array($whitelist)) {
             return $whitelist;
         }

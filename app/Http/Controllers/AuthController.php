@@ -17,7 +17,7 @@ class AuthController extends Controller
 
     /**
      * Send SMS verification code (handled locally)
-     * 
+     *
      * This endpoint is handled by the gateway itself rather than proxied to origin
      * because SMS services work better from a China-based server.
      */
@@ -34,12 +34,16 @@ class AuthController extends Controller
         $result = $this->smsService->sendVerificationCode($phone);
 
         if ($result['success']) {
-            return new JsonResponse([
+            $response = [
                 'success' => true,
                 'message' => $result['message'],
-                // Only include code in development mode
-                ...($result['code'] ?? [] ? ['code' => $result['code']] : []),
-            ], 200);
+            ];
+
+            if (isset($result['code'])) {
+                $response['code'] = $result['code'];
+            }
+
+            return new JsonResponse($response, 200);
         }
 
         return new JsonResponse([
