@@ -54,8 +54,12 @@ class SmsService
 
     /**
      * Send verification code via SMS
+     * 
+     * @param string $phone Phone number
+     * @param string|null $code Verification code (if null, will be generated)
+     * @param bool $skipRateLimit Skip rate limit check (for external API calls)
      */
-    public function sendVerificationCode(string $phone): array
+    public function sendVerificationCode(string $phone, ?string $code = null, bool $skipRateLimit = false): array
     {
         // Validate phone number format (Chinese mobile)
         if (! preg_match('/^1[3-9]\d{9}$/', $phone)) {
@@ -65,24 +69,31 @@ class SmsService
             ];
         }
 
-        // Check rate limit (max 1 SMS per minute per phone)
-        $rateLimitKey = "sms_rate_limit:{$phone}";
-        if (Cache::has($rateLimitKey)) {
-            return [
-                'success' => false,
-                'message' => 'Please wait before requesting another code',
-            ];
+        // Check rate limit (max 1 SMS per minute per phone) - unless skipped
+        if (!$skipRateLimit) {
+            $rateLimitKey = "sms_rate_limit:{$phone}";
+            if (Cache::has($rateLimitKey)) {
+                return [
+                    'success' => false,
+                    'message' => 'Please wait before requesting another code',
+                ];
+            }
         }
 
-        // Generate 6-digit code
-        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        // Generate 6-digit code if not provided
+        $isLocalGeneration = ($code === null);
+        if ($isLocalGeneration) {
+            $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        }
 
-        // Store code in cache (5 minutes expiry)
-        $codeKey = "sms_code:{$phone}";
-        Cache::put($codeKey, $code, now()->addMinutes(5));
+        // Store code in cache and set rate limit (only for local generation)
+        if ($isLocalGeneration) {
+            $codeKey = "sms_code:{$phone}";
+            Cache::put($codeKey, $code, now()->addMinutes(5));
 
-        // Set rate limit
-        Cache::put($rateLimitKey, true, now()->addMinute());
+            $rateLimitKey = "sms_rate_limit:{$phone}";
+            Cache::put($rateLimitKey, true, now()->addMinute());
+        }
 
         // If Aliyun client is not configured, return code directly (for development)
         if (! $this->client) {

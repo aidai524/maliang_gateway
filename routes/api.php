@@ -24,10 +24,14 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// SMS verification code - handled locally via Aliyun SMS
-Route::post('auth/send-code', [AuthController::class, 'sendCode'])
+// Send SMS verification code - called by external services (like dream-api.sendto.you)
+// Requires API Key and IP whitelist authentication
+Route::post('auth/send-sms-code', [AuthController::class, 'sendSmsCode'])
     ->middleware(['gateway.auth', 'gateway.ratelimit:sms'])
-    ->name('auth.send-code');
+    ->name('auth.send-sms-code');
+
+// Note: /v1/auth/send-code is now proxied to origin API (handled by ProxyController)
+// The origin API will call /v1/auth/send-sms-code to actually send the SMS
 
 /*
 |--------------------------------------------------------------------------

@@ -45,7 +45,7 @@ return [
     'routes' => [
         // Routes to handle locally (not proxied)
         'local' => [
-            'auth/send-code',
+            'auth/send-sms-code',
         ],
 
         // Routes to return 404 (not available through gateway)

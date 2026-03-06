@@ -14,7 +14,7 @@ class ProxyController extends Controller
 
     // Routes that should be handled locally (not proxied)
     protected array $localRoutes = [
-        'auth/send-code',
+        'auth/send-sms-code',
     ];
 
     // Routes that should return 404 (blocked)

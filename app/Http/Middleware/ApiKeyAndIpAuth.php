@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 class ApiKeyAndIpAuth
 {
     protected array $protectedRoutes = [
-        'v1/auth/send-code',
+        'v1/auth/send-sms-code',
     ];
 
     public function handle(Request $request, Closure $next): Response
